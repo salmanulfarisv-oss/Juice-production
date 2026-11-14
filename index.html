@@ -31,6 +31,7 @@ nav button.on{color:var(--ac);box-shadow:inset 0 3px 0 var(--ac)}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 firebase.initializeApp({
  apiKey:"AIzaSyBK8QyxAUTckli--_sp-1KZz7omcvqxrT8",
@@ -54,9 +55,27 @@ function getF(m,lab){var o=uopts(m).find(function(x){return x[0]==lab});return o
 function usel(id,m,sel,oc){return '<select id="'+id+'" style="width:72px" '+(oc||"")+'>'+uopts(m).map(function(o){return '<option'+(o[0]==sel?" selected":"")+'>'+esc(o[0])+'</option>'}).join("")+'</select>'}
 function fillU(mid,uid){var m=M($(mid).value);$(uid).innerHTML=m?uopts(m).map(function(o){return '<option>'+esc(o[0])+'</option>'}).join(""):""}
 function sizeUI(){return '<label>Bottle size (ml)</label>'+(S.sizes.length?'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">'+S.sizes.map(function(z){return '<button class="s sm" style="'+(bd.f.bz==z.ml?'background:var(--ac);color:#fff':'')+'" onclick="bd.f.bz=\''+z.ml+'\';draw()">'+z.ml+' ml</button>'}).join("")+'</div>':'')+'<input type="number" inputmode="decimal" value="'+esc(bd.f.bz)+'" placeholder="Type ml, e.g. 200" oninput="bd.f.bz=this.value;calc()">'}
-function sizesCard(){return '<h2>Bottle sizes</h2><div class="card">'+(S.sizes.length?S.sizes.map(function(z){return '<div class="row"><span class="n">'+z.ml+' ml</span><button class="s sm" onclick="delSize(\''+z.id+'\')">Remove</button></div>'}).join(""):'<span class="mut">No sizes saved yet.</span>')+'<label>Add bottle size (ml)</label><input id="zs" type="number" inputmode="decimal" placeholder="e.g. 200"><button class="s" onclick="addSize()">Add size</button></div>'}
+function sizesCard(){return '<h2>Bottle sizes</h2><div class="card">'+(S.sizes.length?S.sizes.map(function(z){return '<div class="row"><span class="n">'+z.ml+' ml</span>'+(isAdmin?'<button class="s sm" onclick="delSize(\''+z.id+'\')">Remove</button>':'')+'</div>'}).join(""):'<span class="mut">No sizes saved yet.</span>')+'<label>Add bottle size (ml)</label><input id="zs" type="number" inputmode="decimal" placeholder="e.g. 200"><button class="s" onclick="addSize()">Add size</button></div>'}
 function addSize(){var v=parseFloat($("zs").value);if(!(v>0)){say("Enter the size in ml");return}if(S.sizes.some(function(z){return z.ml==v})){say("Size already saved");return}db.collection("sizes").add({ml:v}).then(function(){say(v+" ml added")}).catch(fail)}
-function delSize(id){db.collection("sizes").doc(id).delete().catch(fail)}
+function delSize(id){if(!isAdmin){say("Only admin can delete");return}db.collection("sizes").doc(id).delete().catch(fail)}
+var isAdmin=false,xf=today().slice(0,8)+"01",xt=today();
+function exportCard(){return '<div class="card"><b>Export to Excel</b><label>From</label><input type="date" value="'+xf+'" onchange="xf=this.value"><label>To</label><input type="date" value="'+xt+'" onchange="xt=this.value"><button onclick="exportXlsx()">Download Excel file</button></div>'}
+function exportXlsx(){
+ if(typeof XLSX=="undefined"){say("Excel library not loaded. Check internet");return}
+ if(!xf||!xt||xf>xt){say("Choose a valid date range");return}
+ db.collection("purchases").get().then(function(ps){
+  var r2=function(n){return Math.round(n*100)/100},byDate=function(a,b){return a.date<b.date?-1:a.date>b.date?1:0};
+  var B=S.batches.filter(function(b){return b.date>=xf&&b.date<=xt}).sort(byDate);
+  var P=ps.docs.map(function(d){return d.data()}).filter(function(p){return p.date>=xf&&p.date<=xt}).sort(byDate);
+  var s1=B.map(function(b){var bt=b.bottles||b.out*1000/(b.bsize||1000);return{"Date":b.date,"Product":b.recipe,"Shift":b.shift||"","Output (L)":b.out,"Bottle size (ml)":b.bsize||1000,"Bottles":Math.round(bt),"Material cost":r2(b.mat),"Labor":b.labor||0,"Utilities":b.util||0,"Overhead":b.oh||0,"Total cost":r2(b.total),"Cost per litre":r2(b.total/b.out),"Cost per bottle":r2(b.total/bt),"Yield %":r2(b.out/b.input*100),"Brix":b.brix||"","pH":b.ph||"","Quality":b.qc||"","Entered by":b.by||""}});
+  var s2=[];B.forEach(function(b){b.use.forEach(function(u){s2.push({"Date":b.date,"Product":b.recipe,"Material":u.name,"Unit":u.unit||"","Standard":Math.round(u.std*1000)/1000,"Actual":Math.round(u.act*1000)/1000,"Difference":Math.round((u.act-u.std)*1000)/1000})})});
+  var s3=S.mat.map(function(m){return{"Material":m.name,"Unit":m.unit,"Stock":Math.round(m.stock*1000)/1000,"Average cost":Math.round(m.cost*1000)/1000,"Stock value":r2(m.stock*m.cost),"Reorder level":m.reorder}});
+  var s4=P.map(function(p){return{"Date":p.date,"Material":p.mat,"Supplier":p.supplier||"","Lot / invoice":p.lot||"","Quantity":p.qty,"Unit":p.unit||"","Price per unit":p.price,"Entered by":p.by||""}});
+  var wb=XLSX.utils.book_new();
+  [["Batches",s1],["Materials used",s2],["Stock",s3],["Purchases",s4]].forEach(function(x){XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(x[1]),x[0])});
+  XLSX.writeFile(wb,"production-"+xf+"-to-"+xt+".xlsx");say("Excel file downloaded");
+ }).catch(fail);
+}
 function bots(l){var n=0;l.forEach(function(b){n+=b.bottles||b.out*1000/(b.bsize||1000)});return n}
 function fq(n){return String(Math.round(n*1000)/1000)}
 var dp=null;window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();dp=e;draw()});
@@ -71,7 +90,7 @@ function typing(){var a=document.activeElement;return a&&(a.tagName=="INPUT"||a.
 function fail(e){say("Failed: "+(e.code||e.message))}
 
 auth.onAuthStateChanged(function(u){
- user=u;unsubs.forEach(function(x){x()});unsubs=[];
+ user=u;isAdmin=false;if(u)db.collection("admins").doc(u.uid).get().then(function(d){isAdmin=d.exists;draw()}).catch(function(){});unsubs.forEach(function(x){x()});unsubs=[];
  if(u){["mat","rec","batches","sizes"].forEach(function(c){
   unsubs.push(db.collection(c).onSnapshot(function(s){
    S[c]=s.docs.map(function(d){var o=d.data();o.id=d.id;return o});
@@ -97,12 +116,12 @@ function home(){
  return '<h1>Today’s production</h1><div class="big"><div><b>'+tb.length+'</b><span>Batches</span></div><div><b>'+f(out,0)+' L</b><span>Output</span></div><div><b>'+(out?f(cost/out):"–")+'</b><span>Cost per litre</span></div><div><b>'+(out?f(cost/bots(tb)):"–")+'</b><span>Cost per bottle</span></div></div>'+
  '<h2>Low stock</h2><div class="card">'+(low.length?low.map(function(m){return '<div class="row"><span class="n">'+esc(m.name)+'</span><span class="low">'+fq(m.stock)+' '+esc(m.unit)+' (reorder at '+m.reorder+')</span></div>'}).join(""):'<span class="ok">All materials above reorder level.</span>')+'</div>'+
  '<button onclick="go(\'batch\')">Start a batch</button><button class="s" onclick="go(\'stock\')">Add stock</button>'+
- (dp?'<button class="s" onclick="inst()">Install app on this phone</button>':"")+'<p class="mut">Signed in as '+esc(user.email)+'</p><button class="s" onclick="auth.signOut()">Log out</button>';
+ (dp?'<button class="s" onclick="inst()">Install app on this phone</button>':"")+'<p class="mut">Signed in as '+esc(user.email)+(isAdmin?' (admin)':' (staff)')+'</p><button class="s" onclick="auth.signOut()">Log out</button>';
 }
 
 function stock(){
  var first=S.mat[0]||{unit:""};
- return '<h1>Stock</h1><div class="card">'+(S.mat.length?S.mat.map(function(m){return '<div class="row"><span class="n">'+esc(m.name)+'<br><span class="mut">Avg cost '+fq(m.cost)+' per '+esc(m.unit)+'</span></span><span class="'+(m.stock<=m.reorder?"low":"")+'">'+fq(m.stock)+' '+esc(m.unit)+'</span><button class="s sm" onclick="delMat(\''+m.id+'\')">Remove</button></div>'}).join(""):'<span class="mut">No materials yet. Add your first one below.</span>')+'</div>'+
+ return '<h1>Stock</h1><div class="card">'+(S.mat.length?S.mat.map(function(m){return '<div class="row"><span class="n">'+esc(m.name)+'<br><span class="mut">Avg cost '+fq(m.cost)+' per '+esc(m.unit)+'</span></span><span class="'+(m.stock<=m.reorder?"low":"")+'">'+fq(m.stock)+' '+esc(m.unit)+'</span>'+(isAdmin?'<button class="s sm" onclick="delMat(\''+m.id+'\')">Remove</button>':'')+'</div>'}).join(""):'<span class="mut">No materials yet. Add your first one below.</span>')+'</div>'+
  '<h2>Stock in (purchase)</h2><div class="card"><label>Material</label><select id="pm" onchange="fillU(\'pm\',\'pu\')">'+S.mat.map(function(m){return '<option value="'+m.id+'">'+esc(m.name)+' ('+esc(m.unit)+')</option>'}).join("")+'</select>'+
  '<label>Supplier</label><input id="ps"><label>Lot / invoice no.</label><input id="pl"><label>Quantity and unit</label><div style="display:flex;gap:8px"><input id="pq" type="number" inputmode="decimal">'+usel("pu",first)+'</div><label>Price per selected unit</label><input id="pp" type="number" inputmode="decimal"><button onclick="buy()">Save purchase</button></div>'+
  '<h2>New material</h2><div class="card"><label>Name</label><input id="nn"><label>Unit (kg, L or pcs: rate is per this unit)</label><input id="nu"><label>Reorder level (in that unit)</label><input id="nr" type="number" inputmode="decimal"><button class="s" onclick="addMat()">Add material</button></div>';
@@ -119,7 +138,7 @@ function addMat(){
  var n=$("nn").value.trim();if(!n){say("Enter a name");return}
  db.collection("mat").add({name:n,unit:$("nu").value||"kg",stock:0,cost:0,reorder:parseFloat($("nr").value)||0}).then(function(){say("Added "+n)}).catch(fail);
 }
-function delMat(id){
+function delMat(id){if(!isAdmin){say("Only admin can delete");return}
  var m=M(id);if(!confirm("Remove "+m.name+"? It will also be removed from saved recipes."))return;
  var wb=db.batch();wb.delete(db.collection("mat").doc(id));
  S.rec.forEach(function(r){wb.update(db.collection("rec").doc(r.id),{items:r.items.filter(function(it){return it.m!=id})})});
@@ -176,7 +195,7 @@ function editB(id){
   f:{bs:b.shift||"",bz:String(b.bsize||1000),bn:String(b.bfilled||""),bl:String(b.labor||0),bu:String(b.util||0),bh:String(b.oh||0),bb:b.brix||"",bp:b.ph||"",bq:b.qc||"Pass"}};
  go("batch");
 }
-function delB(id){
+function delB(id){if(!isAdmin){say("Only admin can delete");return}
  var b=S.batches.find(function(x){return x.id==id});
  if(!confirm("Delete this batch? Materials used will be put back into stock."))return;
  var wb=db.batch();
@@ -186,7 +205,7 @@ function delB(id){
 }
 
 function recs(){
- return '<h1>Juice recipes</h1>'+S.rec.map(function(r){return '<div class="card"><b>'+esc(r.name)+'</b> <span class="mut">'+r.liters+' L batch</span>'+r.items.filter(function(it){return M(it.m)}).map(function(it){var m=M(it.m);return '<div class="row"><span class="n">'+esc(m.name)+'</span>'+fq(it.q)+' '+esc(m.unit)+'</div>'}).join("")+'<button class="s" onclick="delRec(\''+r.id+'\')">Delete recipe</button></div>'}).join("")+
+ return '<h1>Juice recipes</h1>'+S.rec.map(function(r){return '<div class="card"><b>'+esc(r.name)+'</b> <span class="mut">'+r.liters+' L batch</span>'+r.items.filter(function(it){return M(it.m)}).map(function(it){var m=M(it.m);return '<div class="row"><span class="n">'+esc(m.name)+'</span>'+fq(it.q)+' '+esc(m.unit)+'</div>'}).join("")+''+(isAdmin?'<button class="s" onclick="delRec(\''+r.id+'\')">Delete recipe</button>':'')+'</div>'}).join("")+
  '<h2>Add a juice</h2><div class="card"><label>Juice name</label><input value="'+esc(draft.name)+'" placeholder="e.g. Mango Juice 100 L" oninput="draft.name=this.value"><label>Batch size (litres)</label><input type="number" inputmode="decimal" value="'+draft.liters+'" oninput="draft.liters=parseFloat(this.value)||0">'+
  draft.items.map(function(it,i){var m=M(it.m);return m?'<div class="row"><span class="n">'+esc(m.name)+'</span>'+fq(it.q)+' '+esc(m.unit)+'<button class="s sm" onclick="draft.items.splice('+i+',1);draw()">Remove</button></div>':""}).join("")+
  '<label>Ingredient</label><select id="di" onchange="fillU(\'di\',\'du\')">'+S.mat.map(function(m){return '<option value="'+m.id+'">'+esc(m.name)+' ('+esc(m.unit)+')</option>'}).join("")+'</select><label>Standard quantity and unit</label><div style="display:flex;gap:8px"><input id="dq" type="number" inputmode="decimal">'+usel("du",S.mat[0]||{unit:""})+'</div><button class="s" onclick="addIt()">Add ingredient</button><button onclick="saveRec()">Save juice</button></div>'+sizesCard();
@@ -196,7 +215,7 @@ function saveRec(){
  if(!draft.name.trim()||!draft.items.length||!(draft.liters>0)){say("Add a name, batch size and ingredients");return}
  db.collection("rec").add({name:draft.name.trim(),liters:draft.liters,items:draft.items}).then(function(){draft={name:"",liters:100,items:[]};say("Juice saved")}).catch(fail);
 }
-function delRec(id){if(confirm("Delete this recipe? Past batches stay in reports."))db.collection("rec").doc(id).delete().catch(fail)}
+function delRec(id){if(!isAdmin){say("Only admin can delete");return}if(confirm("Delete this recipe? Past batches stay in reports."))db.collection("rec").doc(id).delete().catch(fail)}
 
 function bcard(b){
  var varc=b.use.reduce(function(s,u){return s+(u.act-u.std)*(M(u.m)||{cost:0}).cost},0);
@@ -209,13 +228,13 @@ function bcard(b){
  '<div class="row"><span class="n">Usage vs standard</span><span class="'+(varc>0?"low":"ok")+'">'+(varc>0?"+":"")+f(varc)+'</span></div>'+
  '<div class="row"><span class="n">Quality</span><span class="'+(b.qc=="Pass"?"ok":"low")+'">'+esc(b.qc)+(b.brix?" · Brix "+esc(b.brix):"")+(b.ph?" · pH "+esc(b.ph):"")+'</span></div>'+
  '<div class="mut">Entered by '+esc(b.by||"")+'</div>'+
- '<div style="display:flex;gap:8px"><button class="s" onclick="editB(\''+b.id+'\')">Edit</button><button class="s" onclick="delB(\''+b.id+'\')">Delete</button></div></div>';
+ '<div style="display:flex;gap:8px"><button class="s" onclick="editB(\''+b.id+'\')">Edit</button>'+(isAdmin?'<button class="s" onclick="delB(\''+b.id+'\')">Delete</button>':'')+'</div></div>';
 }
 function rep(){
  var td=S.batches.filter(function(b){return b.date==rdate}),out=0,cost=0,cons={},units={};
  td.forEach(function(b){out+=b.out;cost+=b.total;b.use.forEach(function(u){cons[u.name]=(cons[u.name]||0)+u.act;units[u.name]=u.unit})});
  var keys=Object.keys(cons);
- return '<h1>Reports</h1><div class="card"><label>Date</label><input type="date" value="'+rdate+'" onchange="rdate=this.value;draw()"></div>'+
+ return '<h1>Reports</h1>'+exportCard()+'<div class="card"><label>Date</label><input type="date" value="'+rdate+'" onchange="rdate=this.value;draw()"></div>'+
  '<div class="big"><div><b>'+td.length+'</b><span>Batches</span></div><div><b>'+f(out,0)+' L</b><span>Output</span></div><div><b>'+(out?f(cost/out):"–")+'</b><span>Cost per litre</span></div><div><b>'+(out?f(cost/bots(td)):"–")+'</b><span>Cost per bottle</span></div></div>'+
  '<h2>Materials consumed</h2><div class="card">'+(keys.length?keys.map(function(k){return '<div class="row"><span class="n">'+esc(k)+'</span><b>'+fq(cons[k])+' '+esc(units[k]||"")+'</b></div>'}).join(""):'<span class="mut">No batches on this date.</span>')+'</div>'+
  '<h2>Batches</h2>'+(td.length?td.map(bcard).join(""):'<div class="card mut">Nothing saved for this date.</div>');
