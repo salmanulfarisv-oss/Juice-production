@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#e8590c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Juice Tracker">
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" type="image/png" href="./icons/icon-192.png">
+<title>Juice Production Tracker</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#fbf7f0;--sf:#fff;--ink:#2a1a2e;--mut:#7a6b7d;--ac:#e8590c;--ac2:#2f7d4f;--bad:#c92a2a;--ln:#e9e0d3}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1c1420;--sf:#281d2d;--ink:#f5ecf6;--mut:#a998ad;--ac:#ff8a4c;--ac2:#5cc98a;--bad:#ff7b7b;--ln:#3b2e41}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:76px}
+main{max-width:640px;margin:0 auto;padding:16px}
+h1{font-size:1.5rem;margin:4px 0 14px}h2{font-size:1.1rem;margin:20px 0 8px}
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:12px;padding:14px;margin-bottom:12px}
+.big{display:flex;gap:10px;margin-bottom:12px}.big>div{flex:1;background:var(--sf);border:1px solid var(--ln);border-radius:12px;padding:12px}
+.big b{display:block;font-size:1.4rem;color:var(--ac)}.big span,.mut{color:var(--mut);font-size:.85rem}
+label{display:block;font-size:.85rem;color:var(--mut);margin:10px 0 4px}
+input,select,button{font:inherit;width:100%;padding:11px;border-radius:10px;border:1px solid var(--ln);background:var(--bg);color:var(--ink)}
+button{background:var(--ac);color:#fff;border:0;font-weight:600;margin-top:14px}
+button.s{background:var(--bg);color:var(--ink);border:1px solid var(--ln);margin-top:8px}
+.row{display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--ln)}.row:last-child{border:0}
+.row>.n{flex:1}.row input{width:96px;text-align:right}
+.sm{width:auto!important;margin:0!important;padding:7px 10px!important}
+.low{color:var(--bad);font-weight:600}.ok{color:var(--ac2);font-weight:600}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--sf);border-top:1px solid var(--ln);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav button{margin:0;border-radius:0;background:none;color:var(--mut);border:0;padding:14px 2px;font-size:.8rem}
+nav button.on{color:var(--ac);box-shadow:inset 0 3px 0 var(--ac)}
+.toast{position:fixed;left:16px;right:16px;bottom:84px;background:var(--ac2);color:#fff;padding:12px;border-radius:10px;text-align:center}
+</style></head><body>
+<main id="app"></main><nav id="nav"></nav>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+firebase.initializeApp({
+ apiKey:"AIzaSyBK8QyxAUTckli--_sp-1KZz7omcvqxrT8",
+ authDomain:"juice-production.firebaseapp.com",
+ projectId:"juice-production",
+ storageBucket:"juice-production.firebasestorage.app",
+ messagingSenderId:"911749609979",
+ appId:"1:911749609979:web:1490b739a46ff1513a735e"});
+var auth=firebase.auth(),db=firebase.firestore(),FV=firebase.firestore.FieldValue;
+var $=function(i){return document.getElementById(i)};
+var today=function(){var d=new Date();return new Date(d-d.getTimezoneOffset()*60000).toISOString().slice(0,10)};
+var S={mat:[],rec:[],batches:[]},user=null,tab="home",toast="",err="",rdate=today(),unsubs=[];
+var draft={name:"",liters:100,items:[]};
+var M=function(id){return S.mat.find(function(m){return m.id==id})};
+var f=function(n,d){return Number(n).toFixed(d==null?2:d)};
+var esc=function(t){return String(t==null?"":t).replace(/"/g,"&quot;").replace(/</g,"&lt;")};
+function newBd(){return{name:"",liters:100,out:95,rec:null,rows:[],date:today(),editId:null,old:[],f:{bs:"",bl:"0",bu:"0",bh:"0",bb:"",bp:"",bq:"Pass"}}}
+var bd=newBd();
+function say(t){toast=t;draw();setTimeout(function(){toast="";draw()},2400)}
+function go(t){tab=t;draw()}
+function typing(){var a=document.activeElement;return a&&(a.tagName=="INPUT"||a.tagName=="SELECT")}
+function fail(e){say("Failed: "+(e.code||e.message))}
+auth.onAuthStateChanged(function(u){
+ user=u;unsubs.forEach(function(x){x()});unsubs=[];
+ if(u){["mat","rec","batches"].forEach(function(c){
+  unsubs.push(db.collection(c).onSnapshot(function(s){
+   S[c]=s.docs.map(function(d){var o=d.data();o.id=d.id;return o});
+   if(c=="batches")S[c].sort(function(a,b){return (b.date+b.ts)>(a.date+a.ts)?1:-1});
+   if(c=="mat")S[c].sort(function(a,b){return a.name.localeCompare(b.name)});
+   if(!typing())draw()},function(e){say("Sync error: "+e.code)}))})}
+ else S={mat:[],rec:[],batches:[]};
+ draw()});
+function login(){auth.signInWithEmailAndPassword($("le").value.trim(),$("lp").value).catch(function(e){err="Login failed: "+e.code;draw()})}
+function draw(){
+ if(!user){$("nav").innerHTML="";$("app").innerHTML='<h1>Juice Production</h1><div class="card"><label>Email</label><input id="le" type="email" autocomplete="username"><label>Password</label><input id="lp" type="password" autocomplete="current-password"><button onclick="login()">Log in</button><p class="low">'+err+'</p></div>';return}
+ var tabs=[["home","Home"],["stock","Stock"],["batch","Batch"],["rec","Recipes"],["rep","Reports"]];
+ $("nav").innerHTML=tabs.map(function(t){return '<button class="'+(tab==t[0]?"on":"")+'" onclick="go(\''+t[0]+'\')">'+t[1]+'</button>'}).join("");
+ $("app").innerHTML={home:home,stock:stock,batch:batch,rec:recs,rep:rep}[tab]()+(toast?'<div class="toast">'+toast+'</div>':"");
+ if(tab=="batch")calc();
+}
+function home(){
+ var tb=S.batches.filter(function(b){return b.date==today()}),out=0,cost=0;tb.forEach(function(b){out+=b.out;cost+=b.total});
+ var low=S.mat.filter(function(m){return m.stock<=m.reorder});
+ return '<h1>Today’s production</h1><div class="big"><div><b>'+tb.length+'</b><span>Batches</span></div><div><b>'+f(out,0)+' L</b><span>Output</span></div><div><b>'+(out?f(cost/out):"–")+'</b><span>Cost per litre</span></div></div>'+
+ '<h2>Low stock</h2><div class="card">'+(low.length?low.map(function(m){return '<div class="row"><span class="n">'+esc(m.name)+'</span><span class="low">'+f(m.stock,1)+' '+esc(m.unit)+' (reorder at '+m.reorder+')</span></div>'}).join(""):'<span class="ok">All materials above reorder level.</span>')+'</div>'+
+ '<button onclick="go(\'batch\')">Start a batch</button><button class="s" onclick="go(\'stock\')">Add stock</button>'+
+ '<p class="mut">Signed in as '+esc(user.email)+'</p><button class="s" onclick="auth.signOut()">Log out</button>';
+}
+function stock(){
+ return '<h1>Stock</h1><div class="card">'+(S.mat.length?S.mat.map(function(m){return '<div class="row"><span class="n">'+esc(m.name)+'<br><span class="mut">Avg cost '+f(m.cost)+' per '+esc(m.unit)+'</span></span><span class="'+(m.stock<=m.reorder?"low":"")+'">'+f(m.stock,1)+' '+esc(m.unit)+'</span><button class="s sm" onclick="delMat(\''+m.id+'\')">Remove</button></div>'}).join(""):'<span class="mut">No materials yet. Add your first one below.</span>')+'</div>'+
+ '<h2>Stock in (purchase)</h2><div class="card"><label>Material</label><select id="pm">'+S.mat.map(function(m){return '<option value="'+m.id+'">'+esc(m.name)+' ('+esc(m.unit)+')</option>'}).join("")+'</select>'+
+ '<label>Supplier</label><input id="ps"><label>Lot / invoice no.</label><input id="pl"><label>Quantity</label><input id="pq" type="number" inputmode="decimal"><label>Unit price</label><input id="pp" type="number" inputmode="decimal"><button onclick="buy()">Save purchase</button></div>'+
+ '<h2>New material</h2><div class="card"><label>Name</label><input id="nn"><label>Unit (kg, L, pcs)</label><input id="nu"><label>Reorder level</label><input id="nr" type="number" inputmode="decimal"><button class="s" onclick="addMat()">Add material</button></div>';
+}
+function buy(){
+ var m=M($("pm").value),q=parseFloat($("pq").value),p=parseFloat($("pp").value);
+ if(!m||!(q>0)||isNaN(p)){say("Enter material, quantity and price");return}
+ var wb=db.batch();
+ wb.update(db.collection("mat").doc(m.id),{stock:FV.increment(q),cost:(m.stock*m.cost+q*p)/(m.stock+q)});
+ wb.set(db.collection("purchases").doc(),{date:today(),mat:m.name,supplier:$("ps").value,lot:$("pl").value,qty:q,price:p,by:user.email,ts:Date.now()});
+ wb.commit().then(function(){say("Purchase saved: "+f(q,1)+" "+m.unit+" of "+m.name)}).catch(fail);
+}
+function addMat(){
+ var n=$("nn").value.trim();if(!n){say("Enter a name");return}
+ db.collection("mat").add({name:n,unit:$("nu").value||"kg",stock:0,cost:0,reorder:parseFloat($("nr").value)||0}).then(function(){say("Added "+n)}).catch(fail);
+}
+function delMat(id){
+ var m=M(id);if(!confirm("Remove "+m.name+"? It will also be removed from saved recipes."))return;
+ var wb=db.batch();wb.delete(db.collection("mat").doc(id));
+ S.rec.forEach(function(r){wb.update(db.collection("rec").doc(r.id),{items:r.items.filter(function(it){return it.m!=id})})});
+ wb.commit().then(function(){say(m.name+" removed")}).catch(fail);
+}
+function scaled(r,l){return r.items.filter(function(it){return M(it.m)}).map(function(it){var q=Math.round(it.q*l/r.liters*100)/100;return{m:it.m,q:q,std:q}})}
+function loadStd(){var r=S.rec.find(function(x){return x.name.toLowerCase()==bd.name.trim().toLowerCase()});if(r&&!bd.rows.length){bd.rec=r;bd.rows=scaled(r,bd.liters);draw()}}
+function setLit(v){var l=parseFloat(v)||0;bd.liters=l;bd.out=Math.round(l*0.95*10)/10;if(bd.rec)bd.rows=scaled(bd.rec,l);draw()}
+function addRow(){var q=parseFloat($("aq").value);if(!$("am").value||!(q>0)){say("Choose a material and quantity");return}bd.rows.push({m:$("am").value,q:q,std:null});draw()}
+function fld(k,l,t,ph){return '<label>'+l+'</label><input type="'+t+'" '+(t=="number"?'inputmode="decimal" ':'')+'value="'+esc(bd.f[k])+'" placeholder="'+(ph||"")+'" oninput="bd.f.'+k+'=this.value;calc()">'}
+function batch(){
+ var b=bd;
+ return '<h1>'+(b.editId?"Edit batch":"New batch")+'</h1><div class="card"><label>Date</label><input type="date" value="'+b.date+'" onchange="bd.date=this.value">'+
+ '<label>Juice name</label><input list="jn" value="'+esc(b.name)+'" placeholder="Type any juice, e.g. Mango" oninput="bd.name=this.value" onchange="loadStd()"><datalist id="jn">'+S.rec.map(function(r){return '<option value="'+esc(r.name)+'">'}).join("")+'</datalist>'+
+ '<label>Batch size (litres)</label><input type="number" inputmode="decimal" value="'+b.liters+'" onchange="setLit(this.value)">'+fld('bs','Shift / supervisor','text','e.g. Morning – Ali')+'</div>'+
+ '<h2>Materials used</h2><div class="card">'+(b.rows.length?b.rows.map(function(r,i){var m=M(r.m);if(!m)return"";return '<div class="row"><span class="n">'+esc(m.name)+'<br><span class="mut">'+(r.std!=null?'Standard '+f(r.std,1)+' · ':'')+'stock '+f(m.stock,1)+' '+esc(m.unit)+'</span></span><input type="number" inputmode="decimal" value="'+r.q+'" oninput="bd.rows['+i+'].q=parseFloat(this.value)||0;calc()"><button class="s sm" onclick="bd.rows.splice('+i+',1);draw()">✕</button></div>'}).join(""):'<span class="mut">Type a saved juice name to fill its standard quantities, or add materials below.</span>')+
+ '<label>Add material</label><select id="am">'+S.mat.map(function(m){return '<option value="'+m.id+'">'+esc(m.name)+' ('+esc(m.unit)+')</option>'}).join("")+'</select><label>Quantity used</label><input id="aq" type="number" inputmode="decimal"><button class="s" onclick="addRow()">Add material</button></div>'+
+ '<h2>Output and costs</h2><div class="card"><label>Output (litres)</label><input type="number" inputmode="decimal" value="'+b.out+'" oninput="bd.out=parseFloat(this.value)||0;calc()">'+fld('bl','Labor','number')+fld('bu','Electricity, gas and water','number')+fld('bh','Other overhead','number')+'</div>'+
+ '<h2>Quality check</h2><div class="card">'+fld('bb','Brix','number')+fld('bp','pH','number')+'<label>Result</label><select onchange="bd.f.bq=this.value"><option'+(b.f.bq=="Pass"?" selected":"")+'>Pass</option><option'+(b.f.bq=="Fail"?" selected":"")+'>Fail</option></select></div>'+
+ '<div class="card" id="sum"></div><button onclick="saveBatch()">'+(b.editId?"Save changes":"Save batch")+'</button>'+(b.editId?'<button class="s" onclick="bd=newBd();go(\'rep\')">Cancel</button>':"");
+}
+function vals(){
+ var mat=0;bd.rows.forEach(function(r){var m=M(r.m);if(m)mat+=r.q*m.cost});
+ var g=function(k){return parseFloat(bd.f[k])||0};
+ return{mat:mat,other:g("bl")+g("bu")+g("bh"),total:mat+g("bl")+g("bu")+g("bh"),out:bd.out,input:bd.liters};
+}
+function calc(){
+ if(!$("sum"))return;var v=vals();
+ $("sum").innerHTML='<div class="row"><span class="n">Material cost</span><b>'+f(v.mat)+'</b></div><div class="row"><span class="n">Labor and overhead</span><b>'+f(v.other)+'</b></div><div class="row"><span class="n">Total batch cost</span><b>'+f(v.total)+'</b></div><div class="row"><span class="n">Cost per litre</span><b class="ok">'+(v.out?f(v.total/v.out):"–")+'</b></div><div class="row"><span class="n">Yield</span><b>'+(v.input?f(v.out/v.input*100,1):"–")+'%</b></div>';
+}
+function saveBatch(){
+ var v=vals(),rows=bd.rows.filter(function(r){return M(r.m)});
+ if(!bd.name.trim()){say("Type the juice name");return}
+ if(!rows.length){say("Add at least one material");return}
+ if(!(v.out>0)||!(v.input>0)){say("Enter batch size and output litres");return}
+ for(var i=0;i<rows.length;i++){
+  var avail=M(rows[i].m).stock;
+  bd.old.forEach(function(u){if(u.m==rows[i].m)avail+=u.act});
+  if(rows[i].q>avail){say("Not enough stock: "+M(rows[i].m).name);return}}
+ var wb=db.batch(),ref=bd.editId?db.collection("batches").doc(bd.editId):db.collection("batches").doc();
+ bd.old.forEach(function(u){if(M(u.m))wb.update(db.collection("mat").doc(u.m),{stock:FV.increment(u.act)})});
+ var use=rows.map(function(r){wb.update(db.collection("mat").doc(r.m),{stock:FV.increment(-r.q)});return{m:r.m,name:M(r.m).name,std:r.std==null?r.q:r.std,act:r.q}});
+ var g=function(k){return parseFloat(bd.f[k])||0};
+ wb.set(ref,{date:bd.date,recipe:bd.name.trim(),shift:bd.f.bs,use:use,mat:v.mat,labor:g("bl"),util:g("bu"),oh:g("bh"),total:v.total,out:v.out,input:v.input,brix:bd.f.bb,ph:bd.f.bp,qc:bd.f.bq,by:user.email,ts:Date.now()});
+ wb.commit().then(function(){var cpl=f(v.total/v.out);rdate=bd.date;bd=newBd();say("Batch saved: "+cpl+" per litre");setTimeout(function(){go("rep")},900)}).catch(fail);
+}
+function editB(id){
+ var b=S.batches.find(function(x){return x.id==id});
+ bd={name:b.recipe,liters:b.input,out:b.out,rec:null,date:b.date,editId:id,old:b.use,rows:b.use.map(function(u){return{m:u.m,q:u.act,std:u.std}}),
+  f:{bs:b.shift||"",bl:String(b.labor||0),bu:String(b.util||0),bh:String(b.oh||0),bb:b.brix||"",bp:b.ph||"",bq:b.qc||"Pass"}};
+ go("batch");
+}
+function delB(id){
+ var b=S.batches.find(function(x){return x.id==id});
+ if(!confirm("Delete this batch? Materials used will be put back into stock."))return;
+ var wb=db.batch();
+ b.use.forEach(function(u){if(M(u.m))wb.update(db.collection("mat").doc(u.m),{stock:FV.increment(u.act)})});
+ wb.delete(db.collection("batches").doc(id));
+ wb.commit().then(function(){say("Batch deleted")}).catch(fail);
+}
+function recs(){
+ return '<h1>Juice recipes</h1>'+S.rec.map(function(r){return '<div class="card"><b>'+esc(r.name)+'</b> <span class="mut">'+r.liters+' L batch</span>'+r.items.filter(function(it){return M(it.m)}).map(function(it){var m=M(it.m);return '<div class="row"><span class="n">'+esc(m.name)+'</span>'+it.q+' '+esc(m.unit)+'</div>'}).join("")+'<button class="s" onclick="delRec(\''+r.id+'\')">Delete recipe</button></div>'}).join("")+
+ '<h2>Add a juice</h2><div class="card"><label>Juice name</label><input value="'+esc(draft.name)+'" placeholder="e.g. Mango Juice 100 L" oninput="draft.name=this.value"><label>Batch size (litres)</label><input type="number" inputmode="decimal" value="'+draft.liters+'" oninput="draft.liters=parseFloat(this.value)||0">'+
+ draft.items.map(function(it,i){var m=M(it.m);return m?'<div class="row"><span class="n">'+esc(m.name)+'</span>'+it.q+' '+esc(m.unit)+'<button class="s sm" onclick="draft.items.splice('+i+',1);draw()">Remove</button></div>':""}).join("")+
+ '<label>Ingredient</label><select id="di">'+S.mat.map(function(m){return '<option value="'+m.id+'">'+esc(m.name)+' ('+esc(m.unit)+')</option>'}).join("")+'</select><label>Standard quantity per batch</label><input id="dq" type="number" inputmode="decimal"><button class="s" onclick="addIt()">Add ingredient</button><button onclick="saveRec()">Save juice</button></div>';
+}
+function addIt(){var q=parseFloat($("dq").value);if(!$("di").value||!(q>0)){say("Choose an ingredient and quantity");return}draft.items.push({m:$("di").value,q:q});draw()}
+function saveRec(){
+ if(!draft.name.trim()||!draft.items.length||!(draft.liters>0)){say("Add a name, batch size and ingredients");return}
+ db.collection("rec").add({name:draft.name.trim(),liters:draft.liters,items:draft.items}).then(function(){draft={name:"",liters:100,items:[]};say("Juice saved")}).catch(fail);
+}
+function delRec(id){if(confirm("Delete this recipe? Past batches stay in reports."))db.collection("rec").doc(id).delete().catch(fail)}
+function bcard(b){
+ var varc=b.use.reduce(function(s,u){return s+(u.act-u.std)*(M(u.m)||{cost:0}).cost},0);
+ return '<div class="card"><b>'+esc(b.recipe)+'</b> <span class="mut">'+b.date+(b.shift?" · "+esc(b.shift):"")+'</span>'+
+ '<div class="row"><span class="n">Output</span>'+f(b.out,0)+' L (yield '+f(b.out/b.input*100,1)+'%)</div>'+
+ '<div class="row"><span class="n">Total cost</span>'+f(b.total)+'</div>'+
+ '<div class="row"><span class="n">Cost per litre</span><b class="ok">'+f(b.total/b.out)+'</b></div>'+
+ '<div class="row"><span class="n">Usage vs standard</span><span class="'+(varc>0?"low":"ok")+'">'+(varc>0?"+":"")+f(varc)+'</span></div>'+
+ '<div class="row"><span class="n">Quality</span><span class="'+(b.qc=="Pass"?"ok":"low")+'">'+esc(b.qc)+(b.brix?" · Brix "+esc(b.brix):"")+(b.ph?" · pH "+esc(b.ph):"")+'</span></div>'+
+ '<div class="mut">Entered by '+esc(b.by||"")+'</div>'+
+ '<div style="display:flex;gap:8px"><button class="s" onclick="editB(\''+b.id+'\')">Edit</button><button class="s" onclick="delB(\''+b.id+'\')">Delete</button></div></div>';
+}
+function rep(){
+ var td=S.batches.filter(function(b){return b.date==rdate}),out=0,cost=0,cons={},unit={};
+ td.forEach(function(b){out+=b.out;cost+=b.total;b.use.forEach(function(u){cons[u.name]=(cons[u.name]||0)+u.act})});
+ var keys=Object.keys(cons);
+ return '<h1>Reports</h1><div class="card"><label>Date</label><input type="date" value="'+rdate+'" onchange="rdate=this.value;draw()"></div>'+
+ '<div class="big"><div><b>'+td.length+'</b><span>Batches</span></div><div><b>'+f(out,0)+' L</b><span>Output</span></div><div><b>'+(out?f(cost/out):"–")+'</b><span>Cost per litre</span></div></div>'+
+ '<h2>Materials consumed</h2><div class="card">'+(keys.length?keys.map(function(k){return '<div class="row"><span class="n">'+esc(k)+'</span><b>'+f(cons[k],1)+'</b></div>'}).join(""):'<span class="mut">No batches on this date.</span>')+'</div>'+
+ '<h2>Batches</h2>'+(td.length?td.map(bcard).join(""):'<div class="card mut">Nothing saved for this date.</div>');
+}
+draw();
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+ window.addEventListener("load", function() {
+  navigator.serviceWorker.register("./service-worker.js")
+   .catch(function(error) {
+    console.error("Service worker registration failed:", error);
+   });
+ });
+}
+</script>
+</body></html>
