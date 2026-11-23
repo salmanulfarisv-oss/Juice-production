@@ -2,13 +2,13 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Juice Production Tracker</title>
-<link rel="manifest" href="manifest.json"><meta name="theme-color" content="#e8590c"><link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;600&display=swap" rel="stylesheet"><link rel="manifest" href="manifest.json"><meta name="theme-color" content="#e8590c"><link rel="apple-touch-icon" href="icon-192.png">
 <style>
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
 --bg:#fbf7f0;--sf:#fff;--ink:#2a1a2e;--mut:#7a6b7d;--ac:#e8590c;--ac2:#2f7d4f;--bad:#c92a2a;--ln:#e9e0d3}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1c1420;--sf:#281d2d;--ink:#f5ecf6;--mut:#a998ad;--ac:#ff8a4c;--ac2:#5cc98a;--bad:#ff7b7b;--ln:#3b2e41}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:76px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Noto Sans Malayalam","Segoe UI",Roboto,sans-serif;padding-bottom:76px}
 main{max-width:640px;margin:0 auto;padding:16px}
 h1{font-size:1.5rem;margin:4px 0 14px}h2{font-size:1.1rem;margin:20px 0 8px}
 .card{background:var(--sf);border:1px solid var(--ln);border-radius:12px;padding:14px;margin-bottom:12px}
@@ -76,12 +76,58 @@ function exportXlsx(){
   XLSX.writeFile(wb,"production-"+xf+"-to-"+xt+".xlsx");say("Excel file downloaded");
  }).catch(fail);
 }
+/*TR-START*/
+var lang=(function(){try{return localStorage.getItem("lang")||"ml"}catch(e){return"ml"}})();
+function setLang(){lang=lang=="ml"?"en":"ml";try{localStorage.setItem("lang",lang)}catch(e){}draw()}
+var D={"Enter the quantity used for each material. Leave blank if not used.":"ഓരോ സാധനത്തിനും ഉപയോഗിച്ച അളവ് നൽകുക. ഉപയോഗിച്ചില്ലെങ്കിൽ ഒഴിച്ചിടുക.","No materials yet. Add them in the Stock tab.":"ഇതുവരെ സാധനങ്ങൾ ഇല്ല. സ്റ്റോക്ക് ടാബിൽ ചേർക്കുക.","Home":"ഹോം","Stock":"സ്റ്റോക്ക്","Batch":"ബാച്ച്","Recipes":"റെസിപ്പി","Reports":"റിപ്പോർട്ട്",
+"Juice Production":"പ്രൊഡക്ഷൻ ട്രാക്കർ","Email":"ഇമെയിൽ","Password":"പാസ്‌വേഡ്","Log in":"ലോഗിൻ","Log out":"ലോഗ് ഔട്ട്",
+"Today’s production":"ഇന്നത്തെ ഉൽപ്പാദനം","Batches":"ബാച്ചുകൾ","Output":"ഉൽപ്പാദനം","Cost per litre":"ലിറ്ററിന് ചെലവ്","Cost per bottle":"ബോട്ടിലിന് ചെലവ്",
+"Low stock":"സ്റ്റോക്ക് കുറവ്","All materials above reorder level.":"എല്ലാ സാധനങ്ങളും റീഓർഡർ നിലയ്ക്ക് മുകളിലാണ്.","Start a batch":"ബാച്ച് തുടങ്ങുക","Add stock":"സ്റ്റോക്ക് ചേർക്കുക","Install app on this phone":"ഈ ഫോണിൽ ആപ്പ് ഇൻസ്റ്റാൾ ചെയ്യുക",
+"No materials yet. Add your first one below.":"ഇതുവരെ സാധനങ്ങൾ ഇല്ല. ആദ്യത്തേത് താഴെ ചേർക്കുക.","Remove":"നീക്കം ചെയ്യുക","Stock in (purchase)":"സ്റ്റോക്ക് ഇൻ (വാങ്ങൽ)","Material":"സാധനം","Supplier":"വിതരണക്കാരൻ","Lot / invoice no.":"ലോട്ട് / ഇൻവോയ്സ് നമ്പർ","Quantity and unit":"അളവും യൂണിറ്റും","Price per selected unit":"തിരഞ്ഞെടുത്ത യൂണിറ്റിന് വില","Save purchase":"വാങ്ങൽ സേവ് ചെയ്യുക","New material":"പുതിയ സാധനം","Name":"പേര്","Unit (kg, L or pcs: rate is per this unit)":"യൂണിറ്റ് (kg, L അല്ലെങ്കിൽ pcs: വില ഈ യൂണിറ്റിനാണ്)","Reorder level (in that unit)":"റീഓർഡർ നില (ആ യൂണിറ്റിൽ)","Add material":"സാധനം ചേർക്കുക",
+"New batch":"പുതിയ ബാച്ച്","Edit batch":"ബാച്ച് തിരുത്തുക","Date":"തീയതി","Juice name":"ഉൽപ്പന്നത്തിന്റെ പേര്","Type any juice, e.g. Mango":"ഉൽപ്പന്നത്തിന്റെ പേര് ടൈപ്പ് ചെയ്യുക, ഉദാ. മാങ്ങ ജ്യൂസ്","Batch size (litres)":"ബാച്ച് അളവ് (ലിറ്റർ)","Shift / supervisor":"ഷിഫ്റ്റ് / സൂപ്പർവൈസർ","e.g. Morning – Ali":"ഉദാ. രാവിലെ – അലി","Materials used":"ഉപയോഗിച്ച സാധനങ്ങൾ","Type a saved juice name to fill its standard quantities, or add materials below.":"സേവ് ചെയ്ത ഉൽപ്പന്നത്തിന്റെ പേര് ടൈപ്പ് ചെയ്താൽ അളവുകൾ തനിയെ വരും, അല്ലെങ്കിൽ താഴെ സാധനങ്ങൾ ചേർക്കുക.","Quantity used and unit":"ഉപയോഗിച്ച അളവും യൂണിറ്റും","Output and costs":"ഉൽപ്പാദനവും ചെലവുകളും","Output (litres)":"ഉൽപ്പാദനം (ലിറ്റർ)","Bottle size (ml)":"ബോട്ടിൽ വലുപ്പം (ml)","Type ml, e.g. 200":"ml ടൈപ്പ് ചെയ്യുക, ഉദാ. 200","Bottles actually filled (optional)":"യഥാർത്ഥത്തിൽ നിറച്ച ബോട്ടിലുകൾ (ഓപ്ഷണൽ)","Labor":"തൊഴിലാളി ചെലവ്","Electricity, gas and water":"വൈദ്യുതി, ഗ്യാസ്, വെള്ളം","Other overhead":"മറ്റ് ചെലവുകൾ","Quality check":"ഗുണനിലവാര പരിശോധന","Brix":"ബ്രിക്സ്","Result":"ഫലം","Pass":"വിജയം","Fail":"പരാജയം","Save changes":"മാറ്റങ്ങൾ സേവ് ചെയ്യുക","Save batch":"ബാച്ച് സേവ് ചെയ്യുക","Cancel":"റദ്ദാക്കുക",
+"Material cost":"സാധന ചെലവ്","Labor and overhead":"തൊഴിലാളി, മറ്റ് ചെലവ്","Total batch cost":"ബാച്ചിന്റെ ആകെ ചെലവ്","Bottles actually filled":"യഥാർത്ഥ ബോട്ടിലുകൾ","Difference":"വ്യത്യാസം","Yield":"വിളവ്",
+"Juice recipes":"റെസിപ്പികൾ","Delete recipe":"റെസിപ്പി ഡിലീറ്റ് ചെയ്യുക","Add a juice":"പുതിയ ഉൽപ്പന്നം ചേർക്കുക","e.g. Mango Juice 100 L":"ഉദാ. മാങ്ങ ജ്യൂസ് 100 L","Ingredient":"ചേരുവ","Standard quantity and unit":"സ്റ്റാൻഡേർഡ് അളവും യൂണിറ്റും","Add ingredient":"ചേരുവ ചേർക്കുക","Save juice":"ഉൽപ്പന്നം സേവ് ചെയ്യുക","Bottle sizes":"ബോട്ടിൽ വലുപ്പങ്ങൾ","No sizes saved yet.":"വലുപ്പങ്ങൾ ഒന്നും സേവ് ചെയ്തിട്ടില്ല.","Add bottle size (ml)":"ബോട്ടിൽ വലുപ്പം ചേർക്കുക (ml)","e.g. 200":"ഉദാ. 200","Add size":"വലുപ്പം ചേർക്കുക",
+"Export to Excel":"Excel-ലേക്ക് എക്സ്പോർട്ട് ചെയ്യുക","From":"മുതൽ","To":"വരെ","Download Excel file":"Excel ഫയൽ ഡൗൺലോഡ് ചെയ്യുക","Materials consumed":"ഉപയോഗിച്ച സാധനങ്ങൾ","No batches on this date.":"ഈ തീയതിയിൽ ബാച്ചുകൾ ഇല്ല.","Nothing saved for this date.":"ഈ തീയതിയിൽ ഒന്നും സേവ് ചെയ്തിട്ടില്ല.","Edit":"തിരുത്തുക","Delete":"ഡിലീറ്റ്","Total cost":"ആകെ ചെലവ്","Usage vs standard":"ഉപയോഗം vs സ്റ്റാൻഡേർഡ്","Quality":"ഗുണനിലവാരം",
+"Enter material, quantity and price":"സാധനം, അളവ്, വില എന്നിവ നൽകുക","Enter a name":"പേര് നൽകുക","Only admin can delete":"അഡ്മിന് മാത്രമേ ഡിലീറ്റ് ചെയ്യാൻ കഴിയൂ","Type the juice name":"ഉൽപ്പന്നത്തിന്റെ പേര് നൽകുക","Add at least one material":"ഒരു സാധനമെങ്കിലും ചേർക്കുക","Enter batch size and output litres":"ബാച്ച് അളവും ഉൽപ്പാദന ലിറ്ററും നൽകുക","Batch deleted":"ബാച്ച് ഡിലീറ്റ് ചെയ്തു","Choose a material and quantity":"സാധനവും അളവും തിരഞ്ഞെടുക്കുക","Add a name, batch size and ingredients":"പേര്, ബാച്ച് അളവ്, ചേരുവകൾ എന്നിവ ചേർക്കുക","Juice saved":"ഉൽപ്പന്നം സേവ് ചെയ്തു","Choose an ingredient and quantity":"ചേരുവയും അളവും തിരഞ്ഞെടുക്കുക","Enter the size in ml":"വലുപ്പം ml ൽ നൽകുക","Size already saved":"ഈ വലുപ്പം ഇതിനകം ഉണ്ട്","Choose a valid date range":"ശരിയായ തീയതി പരിധി തിരഞ്ഞെടുക്കുക","Excel library not loaded. Check internet":"Excel ലൈബ്രറി ലോഡ് ആയില്ല. ഇന്റർനെറ്റ് പരിശോധിക്കുക","Excel file downloaded":"Excel ഫയൽ ഡൗൺലോഡ് ചെയ്തു",
+"Delete this batch? Materials used will be put back into stock.":"ഈ ബാച്ച് ഡിലീറ്റ് ചെയ്യണോ? ഉപയോഗിച്ച സാധനങ്ങൾ സ്റ്റോക്കിലേക്ക് തിരികെ ചേർക്കും.","Delete this recipe? Past batches stay in reports.":"ഈ റെസിപ്പി ഡിലീറ്റ് ചെയ്യണോ? പഴയ ബാച്ചുകൾ റിപ്പോർട്ടിൽ തുടരും."};
+var PT=[[/^Login failed: (.*)$/,function(m){return"ലോഗിൻ പരാജയപ്പെട്ടു: "+m[1]}],
+[/^Signed in as (.*?) \((admin|staff)\)$/,function(m){return"ലോഗിൻ ചെയ്തത്: "+m[1]+" ("+(m[2]=="admin"?"അഡ്മിൻ":"സ്റ്റാഫ്")+")"}],
+[/^(.*) \(reorder at (.*)\)$/,function(m){return m[1]+" (റീഓർഡർ "+m[2]+")"}],
+[/^Avg cost (.*) per (.*)$/,function(m){return"ശരാശരി വില "+m[1]+" / "+m[2]}],
+[/^Standard (.*) · stock (.*)$/,function(m){return"സ്റ്റാൻഡേർഡ് "+m[1]+" · സ്റ്റോക്ക് "+m[2]}],
+[/^stock (.*)$/,function(m){return"സ്റ്റോക്ക് "+m[1]}],
+[/^Bottles from litres \((.*)\)$/,function(m){return"ലിറ്ററിൽ നിന്നുള്ള ബോട്ടിലുകൾ ("+m[1]+")"}],
+[/^(.*) L batch$/,function(m){return m[1]+" L ബാച്ച്"}],
+[/^Bottles \((.*) ml\)$/,function(m){return"ബോട്ടിലുകൾ ("+m[1]+" ml)"}],
+[/^Entered by (.*)$/,function(m){return"രേഖപ്പെടുത്തിയത്: "+m[1]}],
+[/^(.*) L \(yield (.*)%\)$/,function(m){return m[1]+" L (വിളവ് "+m[2]+"%)"}],
+[/^(Pass|Fail)( · .*)?$/,function(m){return(m[1]=="Pass"?"വിജയം":"പരാജയം")+(m[2]||"").replace("Brix","ബ്രിക്സ്")}],
+[/^Purchase saved: (.*)$/,function(m){return"വാങ്ങൽ സേവ് ചെയ്തു: "+m[1]}],
+[/^Added (.*)$/,function(m){return m[1]+" ചേർത്തു"}],
+[/^(.*) removed$/,function(m){return m[1]+" നീക്കം ചെയ്തു"}],
+[/^Not enough stock: (.*)$/,function(m){return"സ്റ്റോക്ക് മതിയാകില്ല: "+m[1]}],
+[/^Batch saved: (.*) per litre$/,function(m){return"ബാച്ച് സേവ് ചെയ്തു: ലിറ്ററിന് "+m[1]}],
+[/^(.*) ml added$/,function(m){return m[1]+" ml ചേർത്തു"}],
+[/^Failed: (.*)$/,function(m){return"പരാജയപ്പെട്ടു: "+m[1]}],
+[/^Sync error: (.*)$/,function(m){return"സിങ്ക് പിശക്: "+m[1]}],
+[/^Remove (.*)\? It will also be removed from saved recipes\.$/,function(m){return m[1]+" നീക്കം ചെയ്യണോ? സേവ് ചെയ്ത റെസിപ്പികളിൽ നിന്നും ഇത് നീക്കം ചെയ്യപ്പെടും."}]];
+function tr(s){if(D.hasOwnProperty(s))return D[s];for(var i=0;i<PT.length;i++){var m=s.match(PT[i][0]);if(m)return PT[i][1](m)}return s}
+function trNode(r){if(!r)return;var w=document.createTreeWalker(r,4),n,L=[];while(n=w.nextNode())L.push(n);
+ L.forEach(function(n){var s=n.nodeValue,c=s.trim();if(!c)return;var t=tr(c);if(t!==c)n.nodeValue=s.replace(c,t)});
+ r.querySelectorAll("[placeholder]").forEach(function(e){e.setAttribute("placeholder",tr(e.getAttribute("placeholder")))})}
+function trDom(){trNode($("app"));trNode($("nav"))}
+function draw(){draw0();if(lang=="ml")trDom()}
+var _cf=window.confirm;window.confirm=function(m){return _cf.call(window,lang=="ml"?tr(m):m)};
+/*TR-END*/
 function bots(l){var n=0;l.forEach(function(b){n+=b.bottles||b.out*1000/(b.bsize||1000)});return n}
 function fq(n){return String(Math.round(n*1000)/1000)}
 var dp=null;window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();dp=e;draw()});
 function inst(){if(dp){dp.prompt();dp=null;draw()}}
-function setQ(i,v){var r=bd.rows[i],m=M(r.m);r.q=(parseFloat(v)||0)*getF(m,r.u||uopts(m)[0][0]);calc()}
-function setU(i,v){bd.rows[i].u=v;draw()}
+function setQ(id,v){var m=M(id),r=rowOf(id),q=parseFloat(v);
+ if(!(q>0)){if(r)bd.rows.splice(bd.rows.indexOf(r),1);calc();return}
+ if(!r){r={m:id,q:0,std:null,u:null};bd.rows.push(r)}
+ r.q=q*getF(m,uOf(m,r));calc()}
+function setU(id,v){bd.uu=bd.uu||{};bd.uu[id]=v;var r=rowOf(id);if(r)r.u=v;draw()}
 function newBd(){return{name:"",liters:100,out:95,rec:null,rows:[],date:today(),editId:null,old:[],f:{bs:"",bz:"1000",bn:"",bl:"0",bu:"0",bh:"0",bb:"",bp:"",bq:"Pass"}}}
 var bd=newBd();
 function say(t){toast=t;draw();setTimeout(function(){toast="";draw()},2400)}
@@ -102,8 +148,8 @@ auth.onAuthStateChanged(function(u){
  draw()});
 function login(){auth.signInWithEmailAndPassword($("le").value.trim(),$("lp").value).catch(function(e){err="Login failed: "+e.code;draw()})}
 
-function draw(){
- if(!user){$("nav").innerHTML="";$("app").innerHTML='<h1>Juice Production</h1><div class="card"><label>Email</label><input id="le" type="email" autocomplete="username"><label>Password</label><input id="lp" type="password" autocomplete="current-password"><button onclick="login()">Log in</button><p class="low">'+err+'</p></div>';return}
+function draw0(){
+ if(!user){$("nav").innerHTML="";$("app").innerHTML='<h1>Juice Production</h1><div class="card"><label>Email</label><input id="le" type="email" autocomplete="username"><label>Password</label><input id="lp" type="password" autocomplete="current-password"><button onclick="login()">Log in</button><p class="low">'+err+'</p></div><button class="s" onclick="setLang()">'+(lang=="ml"?"English":"മലയാളം")+'</button>';return}
  var tabs=[["home","Home"],["stock","Stock"],["batch","Batch"],["rec","Recipes"],["rep","Reports"]];
  $("nav").innerHTML=tabs.map(function(t){return '<button class="'+(tab==t[0]?"on":"")+'" onclick="go(\''+t[0]+'\')">'+t[1]+'</button>'}).join("");
  $("app").innerHTML={home:home,stock:stock,batch:batch,rec:recs,rep:rep}[tab]()+(toast?'<div class="toast">'+toast+'</div>':"");
@@ -116,7 +162,7 @@ function home(){
  return '<h1>Today’s production</h1><div class="big"><div><b>'+tb.length+'</b><span>Batches</span></div><div><b>'+f(out,0)+' L</b><span>Output</span></div><div><b>'+(out?f(cost/out):"–")+'</b><span>Cost per litre</span></div><div><b>'+(out?f(cost/bots(tb)):"–")+'</b><span>Cost per bottle</span></div></div>'+
  '<h2>Low stock</h2><div class="card">'+(low.length?low.map(function(m){return '<div class="row"><span class="n">'+esc(m.name)+'</span><span class="low">'+fq(m.stock)+' '+esc(m.unit)+' (reorder at '+m.reorder+')</span></div>'}).join(""):'<span class="ok">All materials above reorder level.</span>')+'</div>'+
  '<button onclick="go(\'batch\')">Start a batch</button><button class="s" onclick="go(\'stock\')">Add stock</button>'+
- (dp?'<button class="s" onclick="inst()">Install app on this phone</button>':"")+'<p class="mut">Signed in as '+esc(user.email)+(isAdmin?' (admin)':' (staff)')+'</p><button class="s" onclick="auth.signOut()">Log out</button>';
+ (dp?'<button class="s" onclick="inst()">Install app on this phone</button>':"")+'<p class="mut">Signed in as '+esc(user.email)+(isAdmin?' (admin)':' (staff)')+'</p><button class="s" onclick="setLang()">'+(lang=="ml"?"English":"മലയാളം")+'</button><button class="s" onclick="auth.signOut()">Log out</button>';
 }
 
 function stock(){
@@ -148,17 +194,23 @@ function delMat(id){if(!isAdmin){say("Only admin can delete");return}
 function scaled(r,l){return r.items.filter(function(it){return M(it.m)}).map(function(it){var q=Math.round(it.q*l/r.liters*100)/100;return{m:it.m,q:q,std:q}})}
 function loadStd(){var r=S.rec.find(function(x){return x.name.toLowerCase()==bd.name.trim().toLowerCase()});if(r&&!bd.rows.length){bd.rec=r;bd.rows=scaled(r,bd.liters);draw()}}
 function setLit(v){var l=parseFloat(v)||0;bd.liters=l;bd.out=Math.round(l*0.95*10)/10;if(bd.rec)bd.rows=scaled(bd.rec,l);draw()}
-function addRow(){var m=M($("am").value),q=parseFloat($("aq").value);if(!m||!(q>0)){say("Choose a material and quantity");return}var u=$("au").value;bd.rows.push({m:m.id,q:q*getF(m,u),std:null,u:u});draw()}
+function rowOf(id){return bd.rows.find(function(r){return r.m==id})}
+function uOf(m,r){return(bd.uu&&bd.uu[m.id])||(r&&r.u)||uopts(m)[0][0]}
+function matList(){
+ if(!S.mat.length)return '<div class="card"><span class="mut">No materials yet. Add them in the Stock tab.</span></div>';
+ return '<div class="card"><div class="mut" style="margin-bottom:4px">Enter the quantity used for each material. Leave blank if not used.</div>'+S.mat.map(function(m){
+  var r=rowOf(m.id),u=uOf(m,r),F=getF(m,u);
+  return '<div class="row"><span class="n">'+esc(m.name)+'<br><span class="mut">'+(r&&r.std!=null?'Standard '+fq(r.std)+' '+esc(m.unit)+' · ':'')+'stock '+fq(m.stock)+' '+esc(m.unit)+'</span></span><input type="number" inputmode="decimal" placeholder="0" value="'+(r?fq(r.q/F):"")+'" oninput="setQ(\''+m.id+'\',this.value)">'+usel("ru"+m.id,m,u,'onchange="setU(\''+m.id+'\',this.value)"')+'</div>'}).join("")+'</div>';
+}
 function fld(k,l,t,ph){return '<label>'+l+'</label><input type="'+t+'" '+(t=="number"?'inputmode="decimal" ':'')+'value="'+esc(bd.f[k])+'" placeholder="'+(ph||"")+'" oninput="bd.f.'+k+'=this.value;calc()">'}
 function batch(){
  var b=bd;
  return '<h1>'+(b.editId?"Edit batch":"New batch")+'</h1><div class="card"><label>Date</label><input type="date" value="'+b.date+'" onchange="bd.date=this.value">'+
  '<label>Juice name</label><input list="jn" value="'+esc(b.name)+'" placeholder="Type any juice, e.g. Mango" oninput="bd.name=this.value" onchange="loadStd()"><datalist id="jn">'+S.rec.map(function(r){return '<option value="'+esc(r.name)+'">'}).join("")+'</datalist>'+
  '<label>Batch size (litres)</label><input type="number" inputmode="decimal" value="'+b.liters+'" onchange="setLit(this.value)">'+fld('bs','Shift / supervisor','text','e.g. Morning – Ali')+'</div>'+
- '<h2>Materials used</h2><div class="card">'+(b.rows.length?b.rows.map(function(r,i){var m=M(r.m);if(!m)return"";var u=r.u||uopts(m)[0][0],F=getF(m,u);return '<div class="row"><span class="n">'+esc(m.name)+'<br><span class="mut">'+(r.std!=null?'Standard '+fq(r.std)+' '+esc(m.unit)+' · ':'')+'stock '+fq(m.stock)+' '+esc(m.unit)+'</span></span><input type="number" inputmode="decimal" value="'+fq(r.q/F)+'" oninput="setQ('+i+',this.value)">'+usel("ru"+i,m,u,'onchange="setU('+i+',this.value)"')+'<button class="s sm" onclick="bd.rows.splice('+i+',1);draw()">✕</button></div>'}).join(""):'<span class="mut">Type a saved juice name to fill its standard quantities, or add materials below.</span>')+
- '<label>Add material</label><select id="am" onchange="fillU(\'am\',\'au\')">'+S.mat.map(function(m){return '<option value="'+m.id+'">'+esc(m.name)+' ('+esc(m.unit)+')</option>'}).join("")+'</select><label>Quantity used and unit</label><div style="display:flex;gap:8px"><input id="aq" type="number" inputmode="decimal">'+usel("au",S.mat[0]||{unit:""})+'</div><button class="s" onclick="addRow()">Add material</button></div>'+
+ '<h2>Materials used</h2>'+matList()+
  '<h2>Output and costs</h2><div class="card"><label>Output (litres)</label><input type="number" inputmode="decimal" value="'+b.out+'" oninput="bd.out=parseFloat(this.value)||0;calc()">'+sizeUI()+fld('bn','Bottles actually filled (optional)','number')+fld('bl','Labor','number')+fld('bu','Electricity, gas and water','number')+fld('bh','Other overhead','number')+'</div>'+
- '<h2>Quality check</h2><div class="card">'+fld('bb','Brix','number')+fld('bp','pH','number')+'<label>Result</label><select onchange="bd.f.bq=this.value"><option'+(b.f.bq=="Pass"?" selected":"")+'>Pass</option><option'+(b.f.bq=="Fail"?" selected":"")+'>Fail</option></select></div>'+
+ '<h2>Quality check</h2><div class="card">'+fld('bb','Brix','number')+fld('bp','pH','number')+'<label>Result</label><select onchange="bd.f.bq=this.value"><option'+(b.f.bq=="Pass"?" selected":"")+' value="Pass">Pass</option><option'+(b.f.bq=="Fail"?" selected":"")+' value="Fail">Fail</option></select></div>'+
  '<div class="card" id="sum"></div><button onclick="saveBatch()">'+(b.editId?"Save changes":"Save batch")+'</button>'+(b.editId?'<button class="s" onclick="bd=newBd();go(\'rep\')">Cancel</button>':"");
 }
 function vals(){
@@ -171,10 +223,10 @@ function calc(){
  $("sum").innerHTML=R("Material cost",f(v.mat))+R("Labor and overhead",f(v.other))+R("Total batch cost",f(v.total))+R("Cost per litre",v.out?f(v.total/v.out):"–","ok")+
   R("Bottles from litres ("+fq(v.out)+" L ÷ "+fq(v.bz)+" ml)",v.out?fq(Math.round(exp*10)/10):"–")+
   (v.bn>0?R("Bottles actually filled",fq(v.bn))+R("Difference",(v.bn-exp>=0?"+":"")+fq(Math.round((v.bn-exp)*10)/10),v.bn<exp?"low":"ok"):"")+
-  R("Cost per bottle",nb>0?f(v.total/nb):"–","ok")+R("Yield",v.input?f(v.out/v.input*100,1)+"%":"–");
+  R("Cost per bottle",nb>0?f(v.total/nb):"–","ok")+R("Yield",v.input?f(v.out/v.input*100,1)+"%":"–");if(lang=="ml")trNode($("sum"));
 }
 function saveBatch(){
- var v=vals(),rows=bd.rows.filter(function(r){return M(r.m)});
+ var v=vals(),rows=bd.rows.filter(function(r){return M(r.m)&&r.q>0});
  if(!bd.name.trim()){say("Type the juice name");return}
  if(!rows.length){say("Add at least one material");return}
  if(!(v.out>0)||!(v.input>0)){say("Enter batch size and output litres");return}
