@@ -120,7 +120,7 @@ function trDom(){trNode($("app"));trNode($("nav"))}
 function draw(){draw0();if(lang=="ml")trDom()}
 var _cf=window.confirm;window.confirm=function(m){return _cf.call(window,lang=="ml"?tr(m):m)};
 /*TR-END*/
-var editMat=null;
+var editMat=null,adminErr="";
 function editM(id){editMat=id;draw();window.scrollTo(0,0)}
 function matEditCard(){var m=editMat&&M(editMat);if(!m){editMat=null;return""}
  return '<div class="card"><b>Edit material</b><label>Name</label><input id="en" value="'+esc(m.name)+'"><label>Unit</label><input id="eu" value="'+esc(m.unit)+'"><label>Reorder level</label><input id="er" type="number" inputmode="decimal" value="'+m.reorder+'"><label>Average cost per unit</label><input id="ec" type="number" inputmode="decimal" value="'+fq(m.cost)+'"><label>Current stock (physical count)</label><input id="es" type="number" inputmode="decimal" value="'+fq(m.stock)+'"><label>Reason for change (optional)</label><input id="ew" placeholder="e.g. stock count, damaged"><button onclick="saveMat()">Save changes</button><button class="s" onclick="editMat=null;draw()">Cancel</button></div>'}
@@ -150,7 +150,7 @@ function typing(){var a=document.activeElement;return a&&(a.tagName=="INPUT"||a.
 function fail(e){say("Failed: "+(e.code||e.message))}
 
 auth.onAuthStateChanged(function(u){
- user=u;isAdmin=false;if(u)db.collection("admins").doc(u.uid).get().then(function(d){isAdmin=d.exists;draw()}).catch(function(){});unsubs.forEach(function(x){x()});unsubs=[];
+ user=u;isAdmin=false;if(u)db.collection("admins").doc(u.uid).get().then(function(d){isAdmin=d.exists;adminErr=d.exists?"":"no admin record found";draw()}).catch(function(e){adminErr=e.code||"error";draw()});unsubs.forEach(function(x){x()});unsubs=[];
  if(u){["mat","rec","batches","sizes"].forEach(function(c){
   unsubs.push(db.collection(c).onSnapshot(function(s){
    S[c]=s.docs.map(function(d){var o=d.data();o.id=d.id;return o});
@@ -176,7 +176,7 @@ function home(){
  return '<h1>Today’s production</h1><div class="big"><div><b>'+tb.length+'</b><span>Batches</span></div><div><b>'+f(out,0)+' L</b><span>Output</span></div><div><b>'+(out?f(cost/out):"–")+'</b><span>Cost per litre</span></div><div><b>'+(out?f(cost/bots(tb)):"–")+'</b><span>Cost per bottle</span></div></div>'+
  '<h2>Low stock</h2><div class="card">'+(low.length?low.map(function(m){return '<div class="row"><span class="n">'+esc(m.name)+'</span><span class="low">'+fq(m.stock)+' '+esc(m.unit)+' (reorder at '+m.reorder+')</span></div>'}).join(""):'<span class="ok">All materials above reorder level.</span>')+'</div>'+
  '<button onclick="go(\'batch\')">Start a batch</button><button class="s" onclick="go(\'stock\')">Add stock</button>'+
- (dp?'<button class="s" onclick="inst()">Install app on this phone</button>':"")+'<p class="mut">Signed in as '+esc(user.email)+(isAdmin?' (admin)':' (staff)')+'</p><button class="s" onclick="setLang()">'+(lang=="ml"?"English":"മലയാളം")+'</button><button class="s" onclick="auth.signOut()">Log out</button>';
+ (dp?'<button class="s" onclick="inst()">Install app on this phone</button>':"")+'<p class="mut">Signed in as '+esc(user.email)+(isAdmin?' (admin)':' (staff)')+'</p>'+(isAdmin?'':'<p class="mut" style="word-break:break-all">User ID: '+esc(user.uid)+(adminErr?' · Admin check: '+esc(adminErr):'')+'</p>')+'<button class="s" onclick="setLang()">'+(lang=="ml"?"English":"മലയാളം")+'</button><button class="s" onclick="auth.signOut()">Log out</button>';
 }
 
 function stock(){
