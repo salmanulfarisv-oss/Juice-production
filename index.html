@@ -79,7 +79,7 @@ function exportXlsx(){
 /*TR-START*/
 var lang=(function(){try{return localStorage.getItem("lang")||"ml"}catch(e){return"ml"}})();
 function setLang(){lang=lang=="ml"?"en":"ml";try{localStorage.setItem("lang",lang)}catch(e){}draw()}
-var D={"Enter the quantity used for each material. Leave blank if not used.":"ഓരോ സാധനത്തിനും ഉപയോഗിച്ച അളവ് നൽകുക. ഉപയോഗിച്ചില്ലെങ്കിൽ ഒഴിച്ചിടുക.","No materials yet. Add them in the Stock tab.":"ഇതുവരെ സാധനങ്ങൾ ഇല്ല. സ്റ്റോക്ക് ടാബിൽ ചേർക്കുക.","Home":"ഹോം","Stock":"സ്റ്റോക്ക്","Batch":"ബാച്ച്","Recipes":"റെസിപ്പി","Reports":"റിപ്പോർട്ട്",
+var D={"Edit material":"സാധനം തിരുത്തുക","Unit":"യൂണിറ്റ്","Reorder level":"റീഓർഡർ നില","Average cost per unit":"യൂണിറ്റിന് ശരാശരി വില","Current stock (physical count)":"നിലവിലെ സ്റ്റോക്ക് (എണ്ണിയത്)","Reason for change (optional)":"മാറ്റത്തിന്റെ കാരണം (ഓപ്ഷണൽ)","e.g. stock count, damaged":"ഉദാ. സ്റ്റോക്ക് എണ്ണൽ, കേടായത്","Only admin can edit stock":"അഡ്മിന് മാത്രമേ സ്റ്റോക്ക് തിരുത്താൻ കഴിയൂ","Fill all fields with valid numbers":"എല്ലാ കോളങ്ങളിലും ശരിയായ സംഖ്യകൾ നൽകുക","Enter the quantity used for each material. Leave blank if not used.":"ഓരോ സാധനത്തിനും ഉപയോഗിച്ച അളവ് നൽകുക. ഉപയോഗിച്ചില്ലെങ്കിൽ ഒഴിച്ചിടുക.","No materials yet. Add them in the Stock tab.":"ഇതുവരെ സാധനങ്ങൾ ഇല്ല. സ്റ്റോക്ക് ടാബിൽ ചേർക്കുക.","Home":"ഹോം","Stock":"സ്റ്റോക്ക്","Batch":"ബാച്ച്","Recipes":"റെസിപ്പി","Reports":"റിപ്പോർട്ട്",
 "Juice Production":"പ്രൊഡക്ഷൻ ട്രാക്കർ","Email":"ഇമെയിൽ","Password":"പാസ്‌വേഡ്","Log in":"ലോഗിൻ","Log out":"ലോഗ് ഔട്ട്",
 "Today’s production":"ഇന്നത്തെ ഉൽപ്പാദനം","Batches":"ബാച്ചുകൾ","Output":"ഉൽപ്പാദനം","Cost per litre":"ലിറ്ററിന് ചെലവ്","Cost per bottle":"ബോട്ടിലിന് ചെലവ്",
 "Low stock":"സ്റ്റോക്ക് കുറവ്","All materials above reorder level.":"എല്ലാ സാധനങ്ങളും റീഓർഡർ നിലയ്ക്ക് മുകളിലാണ്.","Start a batch":"ബാച്ച് തുടങ്ങുക","Add stock":"സ്റ്റോക്ക് ചേർക്കുക","Install app on this phone":"ഈ ഫോണിൽ ആപ്പ് ഇൻസ്റ്റാൾ ചെയ്യുക",
@@ -90,7 +90,8 @@ var D={"Enter the quantity used for each material. Leave blank if not used.":"�
 "Export to Excel":"Excel-ലേക്ക് എക്സ്പോർട്ട് ചെയ്യുക","From":"മുതൽ","To":"വരെ","Download Excel file":"Excel ഫയൽ ഡൗൺലോഡ് ചെയ്യുക","Materials consumed":"ഉപയോഗിച്ച സാധനങ്ങൾ","No batches on this date.":"ഈ തീയതിയിൽ ബാച്ചുകൾ ഇല്ല.","Nothing saved for this date.":"ഈ തീയതിയിൽ ഒന്നും സേവ് ചെയ്തിട്ടില്ല.","Edit":"തിരുത്തുക","Delete":"ഡിലീറ്റ്","Total cost":"ആകെ ചെലവ്","Usage vs standard":"ഉപയോഗം vs സ്റ്റാൻഡേർഡ്","Quality":"ഗുണനിലവാരം",
 "Enter material, quantity and price":"സാധനം, അളവ്, വില എന്നിവ നൽകുക","Enter a name":"പേര് നൽകുക","Only admin can delete":"അഡ്മിന് മാത്രമേ ഡിലീറ്റ് ചെയ്യാൻ കഴിയൂ","Type the juice name":"ഉൽപ്പന്നത്തിന്റെ പേര് നൽകുക","Add at least one material":"ഒരു സാധനമെങ്കിലും ചേർക്കുക","Enter batch size and output litres":"ബാച്ച് അളവും ഉൽപ്പാദന ലിറ്ററും നൽകുക","Batch deleted":"ബാച്ച് ഡിലീറ്റ് ചെയ്തു","Choose a material and quantity":"സാധനവും അളവും തിരഞ്ഞെടുക്കുക","Add a name, batch size and ingredients":"പേര്, ബാച്ച് അളവ്, ചേരുവകൾ എന്നിവ ചേർക്കുക","Juice saved":"ഉൽപ്പന്നം സേവ് ചെയ്തു","Choose an ingredient and quantity":"ചേരുവയും അളവും തിരഞ്ഞെടുക്കുക","Enter the size in ml":"വലുപ്പം ml ൽ നൽകുക","Size already saved":"ഈ വലുപ്പം ഇതിനകം ഉണ്ട്","Choose a valid date range":"ശരിയായ തീയതി പരിധി തിരഞ്ഞെടുക്കുക","Excel library not loaded. Check internet":"Excel ലൈബ്രറി ലോഡ് ആയില്ല. ഇന്റർനെറ്റ് പരിശോധിക്കുക","Excel file downloaded":"Excel ഫയൽ ഡൗൺലോഡ് ചെയ്തു",
 "Delete this batch? Materials used will be put back into stock.":"ഈ ബാച്ച് ഡിലീറ്റ് ചെയ്യണോ? ഉപയോഗിച്ച സാധനങ്ങൾ സ്റ്റോക്കിലേക്ക് തിരികെ ചേർക്കും.","Delete this recipe? Past batches stay in reports.":"ഈ റെസിപ്പി ഡിലീറ്റ് ചെയ്യണോ? പഴയ ബാച്ചുകൾ റിപ്പോർട്ടിൽ തുടരും."};
-var PT=[[/^Login failed: (.*)$/,function(m){return"ലോഗിൻ പരാജയപ്പെട്ടു: "+m[1]}],
+var PT=[[/^Saved: (.*)$/,function(m){return"സേവ് ചെയ്തു: "+m[1]}],
+[/^Login failed: (.*)$/,function(m){return"ലോഗിൻ പരാജയപ്പെട്ടു: "+m[1]}],
 [/^Signed in as (.*?) \((admin|staff)\)$/,function(m){return"ലോഗിൻ ചെയ്തത്: "+m[1]+" ("+(m[2]=="admin"?"അഡ്മിൻ":"സ്റ്റാഫ്")+")"}],
 [/^(.*) \(reorder at (.*)\)$/,function(m){return m[1]+" (റീഓർഡർ "+m[2]+")"}],
 [/^Avg cost (.*) per (.*)$/,function(m){return"ശരാശരി വില "+m[1]+" / "+m[2]}],
@@ -119,6 +120,19 @@ function trDom(){trNode($("app"));trNode($("nav"))}
 function draw(){draw0();if(lang=="ml")trDom()}
 var _cf=window.confirm;window.confirm=function(m){return _cf.call(window,lang=="ml"?tr(m):m)};
 /*TR-END*/
+var editMat=null;
+function editM(id){editMat=id;draw();window.scrollTo(0,0)}
+function matEditCard(){var m=editMat&&M(editMat);if(!m){editMat=null;return""}
+ return '<div class="card"><b>Edit material</b><label>Name</label><input id="en" value="'+esc(m.name)+'"><label>Unit</label><input id="eu" value="'+esc(m.unit)+'"><label>Reorder level</label><input id="er" type="number" inputmode="decimal" value="'+m.reorder+'"><label>Average cost per unit</label><input id="ec" type="number" inputmode="decimal" value="'+fq(m.cost)+'"><label>Current stock (physical count)</label><input id="es" type="number" inputmode="decimal" value="'+fq(m.stock)+'"><label>Reason for change (optional)</label><input id="ew" placeholder="e.g. stock count, damaged"><button onclick="saveMat()">Save changes</button><button class="s" onclick="editMat=null;draw()">Cancel</button></div>'}
+function saveMat(){
+ if(!isAdmin){say("Only admin can edit stock");return}
+ var m=M(editMat),n=$("en").value.trim(),u=$("eu").value.trim(),r=parseFloat($("er").value),c=parseFloat($("ec").value),st=parseFloat($("es").value);
+ if(!m||!n||!u||isNaN(r)||isNaN(c)||isNaN(st)||c<0||st<0){say("Fill all fields with valid numbers");return}
+ var wb=db.batch();
+ wb.update(db.collection("mat").doc(m.id),{name:n,unit:u,reorder:r,cost:c,stock:st});
+ if(st!=m.stock||c!=m.cost||u!=m.unit||n!=m.name)wb.set(db.collection("adjustments").doc(),{date:today(),mat:n,oldName:m.name,oldStock:m.stock,newStock:st,oldCost:m.cost,newCost:c,oldUnit:m.unit,newUnit:u,reason:$("ew").value,by:user.email,ts:Date.now()});
+ wb.commit().then(function(){editMat=null;say("Saved: "+n)}).catch(fail);
+}
 function bots(l){var n=0;l.forEach(function(b){n+=b.bottles||b.out*1000/(b.bsize||1000)});return n}
 function fq(n){return String(Math.round(n*1000)/1000)}
 var dp=null;window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();dp=e;draw()});
@@ -167,7 +181,7 @@ function home(){
 
 function stock(){
  var first=S.mat[0]||{unit:""};
- return '<h1>Stock</h1><div class="card">'+(S.mat.length?S.mat.map(function(m){return '<div class="row"><span class="n">'+esc(m.name)+'<br><span class="mut">Avg cost '+fq(m.cost)+' per '+esc(m.unit)+'</span></span><span class="'+(m.stock<=m.reorder?"low":"")+'">'+fq(m.stock)+' '+esc(m.unit)+'</span>'+(isAdmin?'<button class="s sm" onclick="delMat(\''+m.id+'\')">Remove</button>':'')+'</div>'}).join(""):'<span class="mut">No materials yet. Add your first one below.</span>')+'</div>'+
+ return '<h1>Stock</h1>'+matEditCard()+'<div class="card">'+(S.mat.length?S.mat.map(function(m){return '<div class="row"><span class="n">'+esc(m.name)+'<br><span class="mut">Avg cost '+fq(m.cost)+' per '+esc(m.unit)+'</span></span><span class="'+(m.stock<=m.reorder?"low":"")+'">'+fq(m.stock)+' '+esc(m.unit)+'</span></div>'+(isAdmin?'<div style="display:flex;gap:8px;margin:0 0 8px"><button class="s sm" onclick="editM(\''+m.id+'\')">Edit</button><button class="s sm" onclick="delMat(\''+m.id+'\')">Delete</button></div>':'')}).join(""):'<span class="mut">No materials yet. Add your first one below.</span>')+'</div>'+
  '<h2>Stock in (purchase)</h2><div class="card"><label>Material</label><select id="pm" onchange="fillU(\'pm\',\'pu\')">'+S.mat.map(function(m){return '<option value="'+m.id+'">'+esc(m.name)+' ('+esc(m.unit)+')</option>'}).join("")+'</select>'+
  '<label>Supplier</label><input id="ps"><label>Lot / invoice no.</label><input id="pl"><label>Quantity and unit</label><div style="display:flex;gap:8px"><input id="pq" type="number" inputmode="decimal">'+usel("pu",first)+'</div><label>Price per selected unit</label><input id="pp" type="number" inputmode="decimal"><button onclick="buy()">Save purchase</button></div>'+
  '<h2>New material</h2><div class="card"><label>Name</label><input id="nn"><label>Unit (kg, L or pcs: rate is per this unit)</label><input id="nu"><label>Reorder level (in that unit)</label><input id="nr" type="number" inputmode="decimal"><button class="s" onclick="addMat()">Add material</button></div>';
