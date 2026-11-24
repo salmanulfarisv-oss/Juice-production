@@ -68,7 +68,7 @@ function exportXlsx(){
   var B=S.batches.filter(function(b){return b.date>=xf&&b.date<=xt}).sort(byDate);
   var P=ps.docs.map(function(d){return d.data()}).filter(function(p){return p.date>=xf&&p.date<=xt}).sort(byDate);
   var s1=B.map(function(b){var bt=b.bottles||b.out*1000/(b.bsize||1000);return{"Date":b.date,"Product":b.recipe,"Shift":b.shift||"","Output (L)":b.out,"Bottle size (ml)":b.bsize||1000,"Bottles":Math.round(bt),"Material cost":r2(b.mat),"Labor":b.labor||0,"Utilities":b.util||0,"Overhead":b.oh||0,"Total cost":r2(b.total),"Cost per litre":r2(b.total/b.out),"Cost per bottle":r2(b.total/bt),"Yield %":r2(b.out/b.input*100),"Brix":b.brix||"","pH":b.ph||"","Quality":b.qc||"","Entered by":b.by||""}});
-  var s2=[];B.forEach(function(b){b.use.forEach(function(u){s2.push({"Date":b.date,"Product":b.recipe,"Material":u.name,"Unit":u.unit||"","Standard":Math.round(u.std*1000)/1000,"Actual":Math.round(u.act*1000)/1000,"Difference":Math.round((u.act-u.std)*1000)/1000})})});
+  var s2=[];B.forEach(function(b){b.use.forEach(function(u){s2.push({"Date":b.date,"Product":b.recipe,"Material":u.name,"Unit":(M(u.m)&&M(u.m).unit)||u.unit||"","Standard":Math.round(u.std*1000)/1000,"Actual":Math.round(u.act*1000)/1000,"Difference":Math.round((u.act-u.std)*1000)/1000})})});
   var s3=S.mat.map(function(m){return{"Material":m.name,"Unit":m.unit,"Stock":Math.round(m.stock*1000)/1000,"Average cost":Math.round(m.cost*1000)/1000,"Stock value":r2(m.stock*m.cost),"Reorder level":m.reorder}});
   var s4=P.map(function(p){return{"Date":p.date,"Material":p.mat,"Supplier":p.supplier||"","Lot / invoice":p.lot||"","Quantity":p.qty,"Unit":p.unit||"","Price per unit":p.price,"Entered by":p.by||""}});
   var wb=XLSX.utils.book_new();
@@ -309,7 +309,7 @@ function bcard(b){
 }
 function rep(){
  var td=S.batches.filter(function(b){return b.date==rdate}),out=0,cost=0,cons={},units={};
- td.forEach(function(b){out+=b.out;cost+=b.total;b.use.forEach(function(u){cons[u.name]=(cons[u.name]||0)+u.act;units[u.name]=u.unit})});
+ td.forEach(function(b){out+=b.out;cost+=b.total;b.use.forEach(function(u){cons[u.name]=(cons[u.name]||0)+u.act;units[u.name]=(M(u.m)&&M(u.m).unit)||u.unit})});
  var keys=Object.keys(cons);
  return '<h1>Reports</h1>'+exportCard()+'<div class="card"><label>Date</label><input type="date" value="'+rdate+'" onchange="rdate=this.value;draw()"></div>'+
  '<div class="big"><div><b>'+td.length+'</b><span>Batches</span></div><div><b>'+f(out,0)+' L</b><span>Output</span></div><div><b>'+(out?f(cost/out):"–")+'</b><span>Cost per litre</span></div><div><b>'+(out?f(cost/bots(td)):"–")+'</b><span>Cost per bottle</span></div></div>'+
