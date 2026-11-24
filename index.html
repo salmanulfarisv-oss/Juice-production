@@ -49,7 +49,7 @@ var M=function(id){return S.mat.find(function(m){return m.id==id})};
 var f=function(n,d){return Number(n).toFixed(d==null?2:d)};
 var esc=function(t){return String(t==null?"":t).replace(/"/g,"&quot;").replace(/</g,"&lt;")};
 var UF={kg:[["kg",1],["g",.001]],g:[["g",1],["kg",1000]],L:[["L",1],["ml",.001]],ml:[["ml",1],["L",1000]]};
-function ub(u){u=String(u||"").trim().toLowerCase();return({kg:"kg",kgs:"kg",g:"g",gm:"g",gram:"g",grams:"g",l:"L",ltr:"L",litre:"L",liter:"L",ml:"ml"})[u]||String(u||"")}
+function ub(u){u=String(u||"").trim().toLowerCase().replace(/^1\s*(?=[a-z])/,"");return({kg:"kg",kgs:"kg",g:"g",gm:"g",gram:"g",grams:"g",l:"L",ltr:"L",litre:"L",liter:"L",ml:"ml"})[u]||String(u||"")}
 function uopts(m){return UF[ub(m.unit)]||[[m.unit,1]]}
 function getF(m,lab){var o=uopts(m).find(function(x){return x[0]==lab});return o?o[1]:1}
 function usel(id,m,sel,oc){return '<select id="'+id+'" style="width:72px" '+(oc||"")+'>'+uopts(m).map(function(o){return '<option'+(o[0]==sel?" selected":"")+'>'+esc(o[0])+'</option>'}).join("")+'</select>'}
